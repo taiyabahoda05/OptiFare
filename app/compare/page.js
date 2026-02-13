@@ -244,7 +244,7 @@ const page = () => {
       setIsPickupOpen(false);
       setIsDropOpen(false);
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again later.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
