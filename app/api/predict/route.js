@@ -2,32 +2,62 @@ import { execFile } from "child_process";
 import path from "path";
 
 export async function POST(request) {
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON request" }, { status: 400 });
+  }
 
-    return new Promise((resolve) => {
-      const scriptPath = path.join(process.cwd(), "predict.py");
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !Number.isFinite(body.distance) ||
+    typeof body.city !== "string" ||
+    typeof body.time !== "string"
+  ) {
+    return Response.json({ error: "Invalid prediction request" }, { status: 400 });
+  }
 
+  const configuredPython = process.env.PYTHON_EXECUTABLE;
+  const executable =
+    configuredPython || (process.platform === "win32" ? "py" : "python3");
+  const pythonArgs =
+    process.platform === "win32" && !configuredPython ? ["-3"] : [];
+  const scriptPath = path.join(process.cwd(), "predict.py");
+
+  try {
+    const { stdout } = await new Promise((resolve, reject) => {
       execFile(
-        "python",
-        [scriptPath, body.distance, body.city, body.time],
-        (error, stdout) => {
+        executable,
+        [
+          ...pythonArgs,
+          scriptPath,
+          String(body.distance),
+          body.city,
+          body.time,
+        ],
+        { cwd: process.cwd() },
+        (error, stdout, stderr) => {
           if (error) {
-            resolve(Response.json({ error: "AI failed" }, { status: 500 }));
+            reject(new Error(`${error.message}\n${stderr.trim()}`));
             return;
           }
 
-          const parsed = Number.parseFloat(stdout.trim());
-          if (Number.isNaN(parsed)) {
-            resolve(Response.json({ error: "Invalid AI output" }, { status: 500 }));
-            return;
-          }
-
-          resolve(Response.json({ prediction: parsed }));
+          resolve({ stdout });
         },
       );
     });
-  } catch {
-    return Response.json({ error: "Server error" }, { status: 500 });
+
+    const prediction = Number.parseFloat(stdout.trim());
+    if (!Number.isFinite(prediction)) {
+      console.error("Prediction script returned invalid output:", stdout);
+      return Response.json({ error: "Invalid AI output" }, { status: 500 });
+    }
+
+    return Response.json({ prediction });
+  } catch (error) {
+    console.error("Prediction subprocess failed:", error);
+    return Response.json({ error: "AI prediction failed" }, { status: 500 });
   }
 }
