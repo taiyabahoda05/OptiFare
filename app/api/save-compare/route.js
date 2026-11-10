@@ -24,7 +24,7 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
+    const client = await clientPromise();
     const db = client.db("optifare");
     const collection = db.collection("comparisons");
 
