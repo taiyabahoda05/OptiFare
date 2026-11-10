@@ -3,7 +3,7 @@ import React from "react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-const page = () => {
+const Page = () => {
   const [pickup, setPickup] = useState("");
   const [drop, setDrop] = useState("");
   const [distance, setDistance] = useState("");
@@ -223,7 +223,7 @@ const page = () => {
 
       setFare(computedFares);
       setBest(bestFare);
-      await fetch("/api/save-compare", {
+      const saveRes = await fetch("/api/save-compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -236,6 +236,10 @@ const page = () => {
           best: bestFare,
         }),
       });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok || !saveData.success) {
+        throw new Error(saveData.error || "Could not save comparison data.");
+      }
 
       setPickup("");
       setDrop("");
@@ -415,6 +419,4 @@ const page = () => {
   );
 };
 
-export default page;
-
-
+export default Page;

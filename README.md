@@ -6,6 +6,8 @@ The system calculates real road distance, estimates ride prices, stores trip dat
 The prediction API requires Python and the packages listed in `requirements.txt`.
 On Windows, install them with `py -3 -m pip install -r requirements.txt`; on
 macOS or Linux, use `python3 -m pip install -r requirements.txt`.
+Set `MONGODB_URI` in `.env.local` to the MongoDB database where comparison data
+should be stored and used for model training.
 
 The API uses the Python launcher on Windows and `python3` on macOS/Linux. To use
 a specific interpreter, set `PYTHON_EXECUTABLE` to its executable path before

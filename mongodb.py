@@ -1,12 +1,17 @@
+import os
+
 from pymongo import MongoClient
 import pandas as pd
 
-def load_data():
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["optifare"]
-    collection = db["comparisons"]
 
-    docs = list(collection.find({}, {"_id": 0}))
+def load_data():
+    uri = os.environ.get("MONGODB_URI")
+    if not uri:
+        raise RuntimeError("MONGODB_URI must be set to load training data")
+
+    with MongoClient(uri) as client:
+        collection = client["optifare"]["comparisons"]
+        docs = list(collection.find({}, {"_id": 0}))
 
     if len(docs) == 0:
         print("No MongoDB data found")
